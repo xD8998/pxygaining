@@ -39,6 +39,7 @@ const validateUser = (username, password) => {
 
 app.get('/', (req, res) => res.send("Server is Online")); // Health check
 
+// --- UPDATED SIGNUP ---
 app.post('/api/signup', async (req, res) => {
     const { username, password } = req.body;
     const error = validateUser(username, password);
@@ -54,13 +55,16 @@ app.post('/api/signup', async (req, res) => {
             [username, hashedPassword, isFirstUser, isFirstUser]
         );
 
-        res.json({ message: isFirstUser ? "Owner account created." : "Account pending approval." });
+        res.json({ 
+            message: isFirstUser ? "Owner account created! Please Login." : "Account pending approval.",
+            isFirstUser: isFirstUser 
+        });
     } catch (err) {
-        console.error(err);
         res.status(400).json({ error: "Username already exists." });
     }
 });
 
+// --- UPDATED LOGIN ---
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -72,7 +76,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         if (!user.is_approved) {
-            return res.status(403).json({ error: "Waiting for approval from owner." });
+            return res.status(403).json({ error: "Your account is still pending approval." });
         }
 
         const token = jwt.sign({ id: user.id, is_owner: user.is_owner }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -80,10 +84,16 @@ app.post('/api/login', async (req, res) => {
         res.cookie('auth_token', token, { 
             maxAge: 30 * 24 * 60 * 60 * 1000, 
             httpOnly: true, 
-            secure: true, // Required for Railway (HTTPS)
-            sameSite: 'none' // Required for cross-site cookies
+            secure: true, 
+            sameSite: 'none' 
         });
-        res.json({ message: "Logged in", needsStarterCode: !user.is_owner });
+
+        // Send back info so Frontend knows what to show
+        res.json({ 
+            message: "Logged in", 
+            isOwner: user.is_owner, 
+            username: user.username 
+        });
     } catch (err) {
         res.status(500).json({ error: "Server Error" });
     }
