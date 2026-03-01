@@ -1,0 +1,8 @@
+# The database URL will be provided by Railway once you create the Postgres service
+DATABASE_URL=postgres://user:password@localhost:5432/mydb
+
+# A random long string to secure your login cookies
+JWT_SECRET=ChangeThisToAReallyLongRandomString123!
+
+# The port the server runs on
+PORT=3000
